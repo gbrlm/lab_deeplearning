@@ -99,6 +99,8 @@ class PadSequences:
 
 
 class MLPClassifier(nn.Module):
+    # Pytorch Module
+    # __init__:defines the structure of the network
     def __init__(self,
                  pretrained_embeddings_path,
                  token_to_index,
@@ -122,18 +124,22 @@ class MLPClassifier(nn.Module):
         self.embeddings = nn.Embedding.from_pretrained(embeddings_matrix,
                                                        freeze=freeze_embedings,
                                                        padding_idx=0)
+        ## Hidden layers definitions
+        ############################
+        ## https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
         self.hidden_layers = [
-            nn.Linear(vector_size, hidden_layers[0])
+            nn.Linear(vector_size, hidden_layers[0]) # first layer
         ]
         for input_size, output_size in zip(hidden_layers[:-1], hidden_layers[1:]):
             self.hidden_layers.append(
-                nn.Linear(input_size, output_size)
+                nn.Linear(input_size, output_size) # intermediate layers if hidden_layers´s size > 2
             )
-        self.dropout = dropout
-        self.hidden_layers = nn.ModuleList(self.hidden_layers)
-        self.output = nn.Linear(hidden_layers[-1], n_labels)
+        self.dropout = dropout # percentage of disabled neurons
+        self.hidden_layers = nn.ModuleList(self.hidden_layers) #  last layer
+        self.output = nn.Linear(hidden_layers[-1], n_labels) 
         self.vector_size = vector_size
-
+        ############################
+    # forward: defines how the network layers interact
     def forward(self, x):
         x = self.embeddings(x)
         x = torch.mean(x, dim=1)
@@ -190,16 +196,23 @@ if __name__ == "__main__":
     )
 
     logging.info("Building training dataset")
+    # An iterable Dataset.
+    # All datasets that represent an iterable of data samples should subclass it. 
+    # Such form of datasets is particularly useful when data come from a stream.
+    # All subclasses should overwrite __iter__(), which would return an iterator of samples in this dataset.
     train_dataset = MeliChallengeDataset(
         dataset_path=args.train_data,
         random_buffer_size=2048  # This can be a hypterparameter
     )
     train_loader = DataLoader(
-        train_dataset,
-        batch_size=128,  # This can be a hyperparameter
-        shuffle=False,
-        collate_fn=pad_sequences,
-        drop_last=False
+        train_dataset,              # dataset from which to load the data.
+        batch_size=128,             # This can be a hyperparameter # how many samples per batch to load (default: ``1``).
+        shuffle=False,              # set to ``True`` to have the data reshuffled at every epoch (default: ``False``).
+        collate_fn=pad_sequences,   # merges a list of samples to form a mini-batch of Tensor(s).  Used when using batched loading from a map-style dataset.
+        drop_last=False             # set to ``True`` to drop the last incomplete batch, if the dataset size is not divisible by the batch size. 
+                                    # If ``False`` and the size of dataset is not divisible by the batch size, then the last batch
+                                    # will be smaller. (default: ``False``)
+        # num_workers=2             # how many subprocesses to use for data loading. ``0`` means that the data will be loaded in the main process. (default: ``0``)
     )
 
     if args.validation_data:
@@ -262,11 +275,16 @@ if __name__ == "__main__":
             freeze_embedings=True  # This can be a hyperparameter
         )
         model = model.to(device)
-        loss = nn.CrossEntropyLoss()
+        # loss function
+        # https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html
+        loss = nn.CrossEntropyLoss()        
+        # optimizer algorithm
+        # https://pytorch.org/docs/stable/optim.html
         optimizer = optim.Adam(
             model.parameters(),
-            lr=1e-3,  # This can be a hyperparameter
-            weight_decay=1e-5  # This can be a hyperparameter
+            lr=1e-3,           # This can be a hyperparameter
+            weight_decay=1e-5  # This can be a hyperparameter # weight for L2 regularization
+            # momentum=        # This can be a hyperparameter
         )
 
         logging.info("Training classifier")
@@ -274,13 +292,17 @@ if __name__ == "__main__":
             model.train()
             running_loss = []
             for idx, batch in enumerate(tqdm(train_loader)):
+                # set to zero the parameter gradients
                 optimizer.zero_grad()
+                # get the inputs; data and target
                 data = batch["data"].to(device)
                 target = batch["target"].to(device)
-                output = model(data)
+                # forward + backward + optimize
+                output = model(data) # MLPClassifier
                 loss_value = loss(output, target)
                 loss_value.backward()
                 optimizer.step()
+                # statistics
                 running_loss.append(loss_value.item())
             mlflow.log_metric("train_loss", sum(running_loss) / len(running_loss), epoch)
 
