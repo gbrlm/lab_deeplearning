@@ -2,6 +2,14 @@
 
 ## Práctico
 
+### Integrantes:
+- Martín Brunori 
+- Maximiliano Nivoli
+- María de los Ángeles Martínez
+- Gabriel Moyano
+
+### Detalles de los experimentos:
+
 En este trabajo se ha tratado un problema de clasificación multi - clase. El DataSet en cuestión cuenta con 600 clases. 
 Se ha trabajado con dos redes neuronales distintas, a las cuales se fue modificando su estructura:
 - Multi Layer Perceptron (MLP)
