@@ -1,4 +1,6 @@
-# labdeeplearning
+# DiploDatos 2020 -  Aprendizaje Profundo
+
+## Práctico
 
 En este trabajo se ha tratado un problema de clasificación multi - clase. El DataSet en cuestión cuenta con 600 clases. 
 Se ha trabajado con dos redes neuronales distintas, a las cuales se fue modificando su estructura:
